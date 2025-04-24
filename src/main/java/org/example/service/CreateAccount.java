@@ -12,40 +12,48 @@ import java.sql.SQLException;
 
 public class CreateAccount {
     private static final Logger logger = LoggerFactory.getLogger(CreateAccount.class);
-    private static final String SqlInsert = """
+    private static final String sqlAddAccount = """
             INSERT INTO credentials
             (account_id, username, password_hash)
             VALUES (?, ?, ?)
             """;
-    // Генерация номера аккаунта
+    // это готово ни трогать ничого
     private static String generateNumberAccount() {
-        long randomNumber = NumberUtils.GeneratedRandomNumber(1_000_000_000_000_000L);
-        if (randomNumber != -1) {
-            return "ACC" + randomNumber;
+        while(true){
+            long randomNumber = NumberUtils.GeneratedRandomNumber(1_000_000_000_000_000L,
+                                                                  10_000_000_000_000_000L);
+            if(randomNumber == -1){
+                logger.warn("Ошибка при генерации номера аккаунта");
+                continue;
+            }
+            String account_id = "ACC" + randomNumber;
+            if(AccountValidation.isAccountNumberUnique(account_id)){
+                logger.info("Уникальный номер аккаунта сгенерирован: {}", account_id);
+                return account_id;
+            } else {
+                logger.warn("Данный номер аккаунта уже существует");
+            }
         }
-        return null;
     }
     // Ввод имени пользователя
     private static String inputNameOwner() {
-        String OwnerName = InputUtils.inputString("Введите имя пользователя:");
-        OwnerName = OwnerName.trim();
-        if (OwnerName.isEmpty()) {
-            System.out.println("Имя не может быть пустым!");
-        } else if (OwnerName.matches(".*\\d+.*")) {
-            System.out.println("Имя не может содержать цифры!");
-        } else if (OwnerName.matches("\".*[^a-zA-Zа-яА-ЯёЁ].*\"")) {
-            System.out.println("Имя не может содержать специальные символы или пробелы!");
-        } else {
-            return OwnerName;
+        while(true){
+            String OwnerName = InputUtils.inputString("Введите имя пользователя:");
+            OwnerName = OwnerName.trim();
+            if (!AccountValidation.isNameValidate(OwnerName)){
+                logger.warn("Имя не подходит под валидацию");
+            } else {
+                logger.info("Успешно введено имя аккаунта");
+                return OwnerName;
+            }
         }
-        return null;
     }
     // Ввод пароля пользователя
     private static String inputPassword() {
         String Password = InputUtils.inputString("Введите новый пароль:");
         Password = Password.trim();
         if (Password.isEmpty()) {
-            System.out.println("Имя не может быть пустым!");
+            System.out.println("Пароль не может быть пустым!");
         } else if (Password.length() < 8) {
             System.out.println("Слишком маленький пароль!");
         } else {
@@ -56,16 +64,23 @@ public class CreateAccount {
     // Создание аккаунта
     public static void createAccount() {
         try (Connection connect = DBUtils.getConnection();
-            PreparedStatement statement = connect.prepareStatement(SqlInsert)) {
+            PreparedStatement statement = connect.prepareStatement(sqlAddAccount)) {
+            // Проверка на подключение к БД с логированием
+            if (connect.isValid(5)) {
+                logger.info("Успешное подключение к базе данных");
+            } else {
+                logger.warn("Подключение установлено, но невалидное");
+            }
             statement.setString(1, generateNumberAccount());
             statement.setString(2, inputNameOwner());
             statement.setString(3, inputPassword());
             int rowsInserted = statement.executeUpdate();
             if (rowsInserted > 0) {
-                System.out.println("Аккаунт успешно добавлен!");
+                logger.info("Аккаунт добавлен в баазу данных");
+                System.out.println("Аккаунт успешно создан!");
             }
         } catch (SQLException e) {
-            logger.error("Ошибка в запросе базы данных");
+            logger.error("Ошибка в запросе базы данных", e);
         }
     }
 }

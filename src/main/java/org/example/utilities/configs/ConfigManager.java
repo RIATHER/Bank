@@ -14,7 +14,7 @@ public class ConfigManager{
         try {
             InputStream config = ConfigManager.class.getClassLoader().getResourceAsStream("config.properties");
             if (config == null){
-                logger.warn("Файл конфигурации не найден");
+                logger.error("Файл конфигурации не найден");
             } else {
                 logger.info("Файл конфигурации успешно загружен");
                 prop.load(config);
@@ -24,17 +24,29 @@ public class ConfigManager{
             throw new RuntimeException(e);
         }
     }
-    private static String getProp(String key){
-        return prop.getProperty(key);
+    @SuppressWarnings("ConstantConditions") // Подавление Warn(config == null)
+    private static String getProp(String key, boolean requeried){
+        String config = prop.getProperty(key);
+        if  (requeried && (config.trim().isEmpty() || config == null)){
+            logger.error("Значение по ключу {} не найдено", key);
+            throw new IllegalArgumentException("Ключ " + key + "обязателен");
+        }
+        return config;
     }
     // Получение скрытых данных
     public static String getDatabaseUrl(){
-        return getProp("db.url");
+        return getProp("db.url", true);
     }
     public static String getUserUsername(){
-        return getProp("db.username");
+        return getProp("db.username", true);
     }
     public static String getUserPassword(){
-        return getProp("db.password");
+        return getProp("db.password", true);
+    }
+    public static String getDataBaseAppVersion(){
+        return getProp("db.version", false);
+    }
+    public static String getDataBaseAppName(){
+        return getProp("db.name", false);
     }
 }
