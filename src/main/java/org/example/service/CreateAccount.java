@@ -35,31 +35,39 @@ public class CreateAccount {
             }
         }
     }
-    // Ввод имени пользователя
+    // не трогай ничого
     private static String inputNameOwner() {
         while(true){
             String OwnerName = InputUtils.inputString("Введите имя пользователя:");
             OwnerName = OwnerName.trim();
             if (!AccountValidation.isNameValidate(OwnerName)){
-                logger.warn("Имя не подходит под валидацию");
+                logger.warn("Имя не проходит валидацию");
             } else {
                 logger.info("Успешно введено имя аккаунта");
                 return OwnerName;
             }
         }
     }
-    // Ввод пароля пользователя
+    // и тут тоже не трогай
     private static String inputPassword() {
-        String Password = InputUtils.inputString("Введите новый пароль:");
-        Password = Password.trim();
-        if (Password.isEmpty()) {
-            System.out.println("Пароль не может быть пустым!");
-        } else if (Password.length() < 8) {
-            System.out.println("Слишком маленький пароль!");
-        } else {
-            return Password;
+        while(true) {
+            System.out.println("""
+                    1. Пароль не может быть пустым
+                    2. Пароль не может быть меньше 8 символов
+                    3. В пароле не могут быть пробелы
+                    4. Пароль должен содержать хотя бы одну заглавную букву
+                    5. Пароль должен содержать хотя бы одну строчную букву
+                    6. Пароль должен содержать хотя бы одну цифру
+                    7. Пароль должен содержать хотя бы один специальный символ""");
+            String Password = InputUtils.inputString("Введите новый пароль:");
+            Password = Password.trim();
+            if (!AccountValidation.isValidatePassword(Password)) {
+                logger.warn("Пароль не проходит валидацию");
+            } else {
+                logger.info("Успешно введен пароль аккаунта");
+                return Password;
+            }
         }
-        return null;
     }
     // Создание аккаунта
     public static void createAccount() {
